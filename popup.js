@@ -21,6 +21,11 @@ els.signOutBtn.addEventListener("click", () => run("Signing out...", "SIGN_OUT")
 els.syncBtn.addEventListener("click", syncResumes);
 els.createJobBtn.addEventListener("click", createJob);
 els.createApplicationBtn.addEventListener("click", createApplication);
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === "local" && changes.midas_auth) {
+    refreshState();
+  }
+});
 
 init();
 
@@ -51,7 +56,7 @@ async function syncResumes(options = {}) {
 
 async function createJob() {
   setBusy(true);
-  setStatus("Capturing page and creating job...");
+  setStatus("Capturing page and analyzing job...");
   try {
     const job = await send({ type: "CREATE_JOB" });
     state.lastJob = job;

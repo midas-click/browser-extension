@@ -1,6 +1,7 @@
-import { getAuth, getSettings } from "./storage.js";
+import { refreshAuthToken } from "./auth.js";
+import { clearAuth, getAuth, getSettings } from "./storage.js";
 
-export async function apiRequest(path, options = {}) {
+export async function apiRequest(path, options = {}, canRefresh = true) {
   const settings = await getSettings();
   const auth = await getAuth();
   const headers = {
@@ -22,6 +23,14 @@ export async function apiRequest(path, options = {}) {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    if (res.status === 401 && canRefresh) {
+      await refreshAuthToken();
+      return apiRequest(path, options, false);
+    }
+    if (res.status === 401) {
+      await clearAuth();
+      throw new Error(body.detail || "Session expired. Sign in again.");
+    }
     throw new Error(body.detail || `HTTP ${res.status}`);
   }
   if (res.status === 204) return null;
@@ -34,18 +43,11 @@ export async function syncResumes() {
 
 export async function createJobFromPage(page) {
   const sourceUrl = normalizeUrl(page.url);
-  const fallback = parseTitle(page.title, page.url);
-  return apiRequest("/jobs", {
+  return apiRequest("/jobs/analyze", {
     method: "POST",
     body: JSON.stringify({
-      title: fallback.title,
-      company: fallback.company,
-      description: page.text,
-      location: null,
-      remote: null,
-      salary_range: null,
+      raw_text: buildAnalysisText(page),
       source_url: sourceUrl,
-      tags: [],
     }),
   });
 }
@@ -77,20 +79,11 @@ function normalizeUrl(url) {
   }
 }
 
-function parseTitle(title, url) {
-  const cleanTitle = (title || "Untitled Job").trim();
-  const parts = cleanTitle.split(/\s[-|@]\s/).map((part) => part.trim()).filter(Boolean);
-  const host = safeHostname(url);
-  return {
-    title: parts[0] || cleanTitle,
-    company: parts[1] || host || "Unknown",
-  };
-}
-
-function safeHostname(url) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return "Unknown";
-  }
+function buildAnalysisText(page) {
+  return [
+    `Page title: ${page.title || ""}`,
+    `URL: ${page.url || ""}`,
+    "",
+    page.text || "",
+  ].join("\n").trim();
 }
