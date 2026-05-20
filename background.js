@@ -2,10 +2,8 @@ import {
   clearAuth,
   getAuth,
   getCachedResumes,
-  getLastJob,
   getSettings,
   saveAuth,
-  saveLastJob,
   saveResumes,
 } from "./storage.js";
 import {
@@ -13,6 +11,8 @@ import {
   createJobFromPage,
   syncResumes,
 } from "./api.js";
+
+let currentJob = null;
 
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
   if (message?.type !== "MIDAS_AUTH_TOKEN") return false;
@@ -43,6 +43,7 @@ async function handleMessage(message) {
       return startSignIn();
     case "SIGN_OUT":
       await clearAuth();
+      currentJob = null;
       return getState();
     case "SYNC_RESUMES":
       return refreshResumes();
@@ -58,17 +59,21 @@ async function handleMessage(message) {
 }
 
 async function getState() {
-  const [auth, resumes, lastJob, settings] = await Promise.all([
+  const [auth, resumes, settings] = await Promise.all([
     getAuth(),
     getCachedResumes(),
-    getLastJob(),
     getSettings(),
   ]);
+  const activeUrl = await getActiveTabUrl();
+  if (currentJob && !isSameUrl(currentJob.source_url, activeUrl)) {
+    currentJob = null;
+  }
+
   return {
     signedIn: Boolean(auth?.token),
     auth,
     resumes,
-    lastJob,
+    lastJob: currentJob,
     settings,
   };
 }
@@ -103,16 +108,38 @@ async function captureCurrentPage() {
 async function createJob() {
   const page = await captureCurrentPage();
   const job = await createJobFromPage(page);
-  await saveLastJob(job);
+  currentJob = job;
   return job;
 }
 
 async function createApplication(resumeId) {
-  const [lastJob, resumes] = await Promise.all([getLastJob(), getCachedResumes()]);
+  const [activeUrl, resumes] = await Promise.all([getActiveTabUrl(), getCachedResumes()]);
+  const lastJob = isSameUrl(currentJob?.source_url, activeUrl) ? currentJob : null;
+  if (!lastJob) currentJob = null;
   if (!lastJob) throw new Error("Create a job first");
 
   const resume = resumes.find((item) => item.id === resumeId) || resumes[0];
   if (!resume) throw new Error("Upload at least one resume before creating applications");
 
   return createApplicationForJob(lastJob, resume);
+}
+
+async function getActiveTabUrl() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  return tab?.url || "";
+}
+
+function isSameUrl(left, right) {
+  if (!left || !right) return false;
+  return normalizeUrl(left) === normalizeUrl(right);
+}
+
+function normalizeUrl(url) {
+  try {
+    const parsed = new URL(url);
+    parsed.hash = "";
+    return parsed.toString().replace(/\/$/, "");
+  } catch {
+    return url || "";
+  }
 }

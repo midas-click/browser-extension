@@ -33,12 +33,3 @@ export async function getCachedResumes() {
   const stored = await chrome.storage.local.get(STORAGE_KEYS.resumes);
   return stored[STORAGE_KEYS.resumes] || [];
 }
-
-export async function saveLastJob(job) {
-  await chrome.storage.local.set({ [STORAGE_KEYS.lastJob]: job });
-}
-
-export async function getLastJob() {
-  const stored = await chrome.storage.local.get(STORAGE_KEYS.lastJob);
-  return stored[STORAGE_KEYS.lastJob] || null;
-}

@@ -119,7 +119,7 @@ function render() {
   els.jobPreview.classList.toggle("hidden", !job);
   if (job) {
     els.jobTitle.textContent = job.title;
-    els.jobMeta.textContent = [job.company, job.source_url].filter(Boolean).join(" · ");
+    els.jobMeta.textContent = [job.company, formatSalary(job)].filter(Boolean).join(" - ");
   }
 
   els.createApplicationBtn.disabled = !job || !resumes.length;
@@ -134,6 +134,10 @@ function setBusy(isBusy) {
 function setStatus(message, kind = "") {
   els.status.textContent = message || "";
   els.status.className = `status ${kind}`;
+}
+
+function formatSalary(job) {
+  return job.salary_range || job.salary || "";
 }
 
 function send(message) {

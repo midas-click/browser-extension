@@ -9,9 +9,11 @@
   <body>
     <main class="shell">
       <header class="header">
-        <div>
-          <h1>Midas Click</h1>
-          <p id="subtitle">Create applications from job pages</p>
+        <div class="brand">
+          <div class="logo">M</div>
+          <div>
+            <h1>Midas Click</h1>
+          </div>
         </div>
         <span id="authBadge" class="badge muted">Checking</span>
       </header>
@@ -21,25 +23,43 @@
         <button id="signInBtn" class="primary">Sign in</button>
       </section>
 
-      <section id="signedIn" class="panel hidden">
-        <div class="row between">
-          <div>
-            <p class="label">Resume</p>
+      <section id="signedIn" class="workspace hidden">
+        <section class="step-card">
+          <div class="step-head">
+            <span class="step-index">1</span>
+            <div>
+              <h2>Create job</h2>
+              <p>Capture this page and save it to your board.</p>
+            </div>
+          </div>
+          <button id="createJobBtn" class="primary">Create Job From Page</button>
+
+          <div id="jobPreview" class="preview hidden">
+            <p class="label">Created job</p>
+            <p id="jobTitle" class="title"></p>
+            <p id="jobMeta" class="muted-text"></p>
+          </div>
+        </section>
+
+        <section class="step-card">
+          <div class="step-head">
+            <span class="step-index">2</span>
+            <div>
+              <h2>Create application</h2>
+              <p>Choose the resume to attach to this job.</p>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <div class="field-label-row">
+              <p class="label">Resume</p>
+              <button id="syncBtn" class="text-action" title="Sync resumes">Sync</button>
+            </div>
             <select id="resumeSelect"></select>
           </div>
-          <button id="syncBtn" class="icon-btn" title="Sync resumes">Sync</button>
-        </div>
 
-        <div class="actions">
-          <button id="createJobBtn" class="primary">Create Job</button>
           <button id="createApplicationBtn" class="secondary" disabled>Create Application</button>
-        </div>
-
-        <div id="jobPreview" class="preview hidden">
-          <p class="label">Created job</p>
-          <p id="jobTitle" class="title"></p>
-          <p id="jobMeta" class="muted-text"></p>
-        </div>
+        </section>
 
         <button id="signOutBtn" class="link-btn">Sign out</button>
       </section>

@@ -7,5 +7,4 @@ export const STORAGE_KEYS = {
   auth: "midas_auth",
   settings: "midas_settings",
   resumes: "midas_resumes",
-  lastJob: "midas_last_job",
 };
