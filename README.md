@@ -44,14 +44,12 @@ chrome.runtime.sendMessage(extensionId, {
 The extension manifest already allows messages from:
 
 ```text
-http://localhost:5173/*
 https://midas-click.netlify.app/*
 ```
 
 ## Validate Auth
 
-1. Start frontend and backend locally.
-2. Load the unpacked extension.
+1. Load the unpacked extension.
 3. Click **Sign in** in the extension popup.
 4. Complete Clerk sign-in on `/extension-auth`.
 5. The page should show `Midas Click extension is connected`.
@@ -60,18 +58,18 @@ https://midas-click.netlify.app/*
 
 ## Config
 
-Edit `config.js` for local or deployed URLs:
-
-```js
-apiBaseUrl: "http://localhost:8000/api/v1",
-webAppUrl: "http://localhost:5173",
-```
-
-For production:
+`config.js` defaults to production:
 
 ```js
 apiBaseUrl: "https://midas-click.onrender.com/api/v1",
 webAppUrl: "https://midas-click.netlify.app",
+```
+
+For local development, temporarily set:
+
+```js
+apiBaseUrl: "http://localhost:8000/api/v1",
+webAppUrl: "http://localhost:5173",
 ```
 
 ## Future Resume Autofill

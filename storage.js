@@ -1,10 +1,13 @@
-import { DEFAULT_CONFIG, STORAGE_KEYS } from "./config.js";
+import { DEFAULT_CONFIG, LOCAL_DEV_CONFIG, STORAGE_KEYS } from "./config.js";
 
 export async function getSettings() {
   const stored = await chrome.storage.local.get(STORAGE_KEYS.settings);
+  const storedSettings = stored[STORAGE_KEYS.settings] || {};
+  const settings = isOldLocalDefault(storedSettings) ? {} : storedSettings;
+
   return {
     ...DEFAULT_CONFIG,
-    ...(stored[STORAGE_KEYS.settings] || {}),
+    ...settings,
   };
 }
 
@@ -32,4 +35,11 @@ export async function saveResumes(resumes) {
 export async function getCachedResumes() {
   const stored = await chrome.storage.local.get(STORAGE_KEYS.resumes);
   return stored[STORAGE_KEYS.resumes] || [];
+}
+
+function isOldLocalDefault(settings) {
+  return (
+    settings.apiBaseUrl === LOCAL_DEV_CONFIG.apiBaseUrl &&
+    settings.webAppUrl === LOCAL_DEV_CONFIG.webAppUrl
+  );
 }
