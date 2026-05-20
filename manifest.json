@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Midas Click",
+  "description": "Create jobs and applications from the current job posting page.",
+  "version": "0.1.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Midas Click"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "http://localhost:8000/*",
+    "https://midas-click.onrender.com/*",
+    "http://localhost:5173/*",
+    "https://midas-click.netlify.app/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:5173/*",
+      "https://midas-click.netlify.app/*"
+    ]
+  }
+}

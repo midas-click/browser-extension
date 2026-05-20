@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Midas Click</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <div>
+          <h1>Midas Click</h1>
+          <p id="subtitle">Create applications from job pages</p>
+        </div>
+        <span id="authBadge" class="badge muted">Checking</span>
+      </header>
+
+      <section id="signedOut" class="panel hidden">
+        <p class="copy">Sign in with your Midas account to sync resumes and create applications.</p>
+        <button id="signInBtn" class="primary">Sign in</button>
+      </section>
+
+      <section id="signedIn" class="panel hidden">
+        <div class="row between">
+          <div>
+            <p class="label">Resume</p>
+            <select id="resumeSelect"></select>
+          </div>
+          <button id="syncBtn" class="icon-btn" title="Sync resumes">Sync</button>
+        </div>
+
+        <div class="actions">
+          <button id="createJobBtn" class="primary">Create Job</button>
+          <button id="createApplicationBtn" class="secondary" disabled>Create Application</button>
+        </div>
+
+        <div id="jobPreview" class="preview hidden">
+          <p class="label">Created job</p>
+          <p id="jobTitle" class="title"></p>
+          <p id="jobMeta" class="muted-text"></p>
+        </div>
+
+        <button id="signOutBtn" class="link-btn">Sign out</button>
+      </section>
+
+      <p id="status" class="status"></p>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
