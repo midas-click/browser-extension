@@ -19,7 +19,7 @@ Match-score fetching is intentionally not implemented in the popup while backend
 3. Click **Load unpacked**.
 4. Select this `extension/` directory.
 
-## Auth Bridge Contract
+## Auth Bridge
 
 The extension opens:
 
@@ -27,7 +27,7 @@ The extension opens:
 {webAppUrl}/extension-auth?extensionId={chrome.runtime.id}
 ```
 
-The web app should authenticate with Clerk, get the session token, then send it to the extension:
+The web app authenticates with Clerk, gets the session token, then sends it to the extension:
 
 ```js
 chrome.runtime.sendMessage(extensionId, {
@@ -47,6 +47,16 @@ The extension manifest already allows messages from:
 http://localhost:5173/*
 https://midas-click.netlify.app/*
 ```
+
+## Validate Auth
+
+1. Start frontend and backend locally.
+2. Load the unpacked extension.
+3. Click **Sign in** in the extension popup.
+4. Complete Clerk sign-in on `/extension-auth`.
+5. The page should show `Midas Click extension is connected`.
+6. Reopen the extension popup; it should show `Signed in`.
+7. Click **Sync** to load resumes.
 
 ## Config
 
