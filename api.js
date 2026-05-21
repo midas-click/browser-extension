@@ -92,6 +92,10 @@ export async function getResumeMatchScores(jobId) {
   return apiRequest(`/jobs/${jobId}/resume-match-scores`);
 }
 
+export async function getJob(jobId) {
+  return apiRequest(`/jobs/${jobId}`);
+}
+
 function normalizeUrl(url) {
   try {
     const parsed = new URL(url);

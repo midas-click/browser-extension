@@ -7,6 +7,7 @@ const els = {
   syncBtn: document.querySelector("#syncBtn"),
   createJobBtn: document.querySelector("#createJobBtn"),
   createApplicationBtn: document.querySelector("#createApplicationBtn"),
+  jobStatus: document.querySelector("#jobStatus"),
   resumeDropdown: document.querySelector("#resumeDropdown"),
   resumeDropdownBtn: document.querySelector("#resumeDropdownBtn"),
   resumeOptions: document.querySelector("#resumeOptions"),
@@ -21,9 +22,12 @@ const els = {
 let state = null;
 let selectedResumeId = "";
 let resumeDropdownOpen = false;
+let stateRefreshTimer = null;
+let resumeManuallySelected = false;
+let busy = false;
 
 els.signInBtn.addEventListener("click", () => run("Opening sign in...", "SIGN_IN"));
-els.signOutBtn.addEventListener("click", () => run("Signing out...", "SIGN_OUT"));
+els.signOutBtn.addEventListener("click", signOut);
 els.syncBtn.addEventListener("click", syncResumes);
 els.createJobBtn.addEventListener("click", createJob);
 els.createApplicationBtn.addEventListener("click", createApplication);
@@ -64,16 +68,17 @@ async function syncResumes(options = {}) {
 
 async function createJob() {
   setBusy(true);
-  setStatus("Capturing page and analyzing job...");
+  setJobStatus("Capturing page and analyzing job...", "info");
+  setStatus("");
   try {
     const job = await send({ type: "CREATE_JOB" });
     state.lastJob = job;
+    resumeManuallySelected = false;
     await refreshState();
     render();
-    setStatus("Job created.", "ok");
-    window.setTimeout(refreshState, 800);
+    setJobStatus("Job created.", "ok");
   } catch (error) {
-    setStatus(error.message, "error");
+    setJobStatus(error.message, "error");
   } finally {
     setBusy(false);
   }
@@ -90,6 +95,18 @@ async function createApplication() {
     setStatus(error.message, "error");
   } finally {
     setBusy(false);
+  }
+}
+
+async function signOut() {
+  setStatus("Signing out...");
+  try {
+    await send({ type: "SIGN_OUT" });
+    await refreshState();
+    setStatus("");
+    setJobStatus("");
+  } catch (error) {
+    setStatus(error.message, "error");
   }
 }
 
@@ -118,12 +135,14 @@ function render() {
   if (!resumes.length) {
     selectedResumeId = "";
     resumeDropdownOpen = false;
-  } else if (bestResumeId && (!selectedResumeId || !resumes.some((resume) => resume.id === selectedResumeId))) {
+    resumeManuallySelected = false;
+  } else if (bestResumeId && !resumeManuallySelected) {
     selectedResumeId = bestResumeId;
   } else if (!selectedResumeId && resumes.length) {
     selectedResumeId = resumes[0].id;
   } else if (selectedResumeId && !resumes.some((resume) => resume.id === selectedResumeId)) {
     selectedResumeId = resumes[0]?.id || "";
+    resumeManuallySelected = false;
   }
 
   renderResumeDropdown(resumes, scoreByResumeId);
@@ -135,20 +154,30 @@ function render() {
     els.jobMeta.textContent = [job.company, formatSalary(job)].filter(Boolean).join(" - ");
   }
   els.matchStatus.textContent = getMatchStatusText(job, resumes, matchScores);
+  els.matchStatus.className = `match-status ${getMatchStatusClass(state?.matchStatus)}`;
 
-  els.createJobBtn.disabled = Boolean(job);
-  els.createApplicationBtn.disabled = !job || !resumes.length;
+  els.createJobBtn.disabled = busy || Boolean(job);
+  els.createApplicationBtn.disabled = busy || !job || !resumes.length;
+  scheduleStateRefreshIfNeeded();
 }
 
 function setBusy(isBusy) {
-  els.createJobBtn.disabled = isBusy || Boolean(state?.lastJob);
-  els.createApplicationBtn.disabled = isBusy || !state?.lastJob || !(state?.resumes || []).length;
-  els.syncBtn.disabled = isBusy;
+  busy = isBusy;
+  const hasJob = Boolean(state?.lastJob);
+  const hasResumes = Boolean((state?.resumes || []).length);
+  els.createJobBtn.disabled = busy || hasJob;
+  els.createApplicationBtn.disabled = busy || !hasJob || !hasResumes;
+  els.syncBtn.disabled = busy;
 }
 
 function setStatus(message, kind = "") {
   els.status.textContent = message || "";
   els.status.className = `status ${kind}`;
+}
+
+function setJobStatus(message, kind = "") {
+  els.jobStatus.textContent = message || "";
+  els.jobStatus.className = `section-status ${kind}`;
 }
 
 function formatSalary(job) {
@@ -201,6 +230,7 @@ function renderResumeDropdown(resumes, scoreByResumeId) {
 
 function selectResume(resumeId) {
   selectedResumeId = resumeId;
+  resumeManuallySelected = true;
   resumeDropdownOpen = false;
   render();
 }
@@ -231,11 +261,33 @@ function getBestResumeId(matchScores) {
 
 function getMatchStatusText(job, resumes, matchScores) {
   if (!job || !resumes.length) return "";
-  if (!matchScores.length) return "Match scores loading in the background.";
+  if (state?.matchStatusMessage) return state.matchStatusMessage;
   if (matchScores.some((score) => score.match_score != null)) {
     return "Best matching resume selected automatically.";
   }
-  return "Match scores unavailable.";
+  return "";
+}
+
+function scheduleStateRefreshIfNeeded() {
+  if (stateRefreshTimer) {
+    window.clearTimeout(stateRefreshTimer);
+    stateRefreshTimer = null;
+  }
+
+  if (!shouldRefreshStateForMatchStatus(state?.matchStatus)) return;
+  stateRefreshTimer = window.setTimeout(refreshState, 1500);
+}
+
+function shouldRefreshStateForMatchStatus(status) {
+  return ["pending", "processing", "loading_scores"].includes(status);
+}
+
+function getMatchStatusClass(status) {
+  if (["completed"].includes(status)) return "success";
+  if (["failed"].includes(status)) return "error";
+  if (["timeout", "unavailable", "disabled"].includes(status)) return "warning";
+  if (["pending", "processing", "loading_scores"].includes(status)) return "info";
+  return "";
 }
 
 function send(message) {

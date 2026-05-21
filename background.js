@@ -9,12 +9,19 @@ import {
 import {
   createApplicationForJobWithMatch,
   createJobFromPage,
+  getJob,
   getResumeMatchScores,
   syncResumes,
 } from "./api.js";
 
+const MATCH_STATUS_POLL_INTERVAL_MS = 2500;
+const MATCH_STATUS_TIMEOUT_MS = 60000;
+
 let currentJob = null;
 let currentMatchScores = [];
+let currentMatchStatus = "idle";
+let currentMatchStatusMessage = "";
+let matchStatusTimer = null;
 
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
   if (message?.type !== "MIDAS_AUTH_TOKEN") return false;
@@ -48,6 +55,7 @@ async function handleMessage(message) {
       await clearAuth();
       currentJob = null;
       currentMatchScores = [];
+      resetMatchStatus();
       return getState();
     case "SYNC_RESUMES":
       return refreshResumes();
@@ -70,6 +78,7 @@ async function getState() {
   if (currentJob && !isSameUrl(currentJob.source_url, activeUrl)) {
     currentJob = null;
     currentMatchScores = [];
+    resetMatchStatus();
   }
 
   return {
@@ -78,6 +87,8 @@ async function getState() {
     resumes,
     lastJob: currentJob,
     matchScores: currentMatchScores,
+    matchStatus: currentMatchStatus,
+    matchStatusMessage: currentMatchStatusMessage,
     settings,
   };
 }
@@ -114,9 +125,7 @@ async function createJob() {
   const job = await createJobFromPage(page);
   currentJob = job;
   currentMatchScores = [];
-  safeGetResumeMatchScores(job.id).then((scores) => {
-    if (currentJob?.id === job.id) currentMatchScores = scores;
-  });
+  startMatchScoreFlow(job.id);
   return job;
 }
 
@@ -139,6 +148,92 @@ async function safeGetResumeMatchScores(jobId) {
   } catch {
     return [];
   }
+}
+
+function startMatchScoreFlow(jobId) {
+  resetMatchStatus();
+
+  const initialStatus = currentJob?.embedding_status || "pending";
+  if (initialStatus === "completed") {
+    loadMatchScores(jobId);
+    return;
+  }
+  if (initialStatus === "disabled") {
+    setMatchStatus("disabled", "Matching is disabled for this environment.");
+    return;
+  }
+  if (initialStatus === "failed") {
+    setMatchStatus("failed", "Matching setup failed. You can still create an application.");
+    return;
+  }
+
+  setMatchStatus("pending", "Preparing match scores in the background.");
+  pollJobEmbeddingStatus(jobId, Date.now());
+}
+
+async function pollJobEmbeddingStatus(jobId, startedAt) {
+  if (currentJob?.id !== jobId) return;
+  if (Date.now() - startedAt > MATCH_STATUS_TIMEOUT_MS) {
+    setMatchStatus("timeout", "Match scores are still processing. You can create an application now.");
+    return;
+  }
+
+  try {
+    const job = await getJob(jobId);
+    if (currentJob?.id !== jobId) return;
+    currentJob = job;
+
+    if (job.embedding_status === "completed") {
+      await loadMatchScores(jobId);
+      return;
+    }
+    if (job.embedding_status === "failed") {
+      setMatchStatus("failed", "Matching setup failed. You can still create an application.");
+      return;
+    }
+    if (job.embedding_status === "disabled") {
+      setMatchStatus("disabled", "Matching is disabled for this environment.");
+      return;
+    }
+
+    const message = job.embedding_status === "processing"
+      ? "Calculating job match data in the background."
+      : "Preparing match scores in the background.";
+    setMatchStatus(job.embedding_status || "pending", message);
+  } catch {
+    setMatchStatus("pending", "Preparing match scores in the background.");
+  }
+
+  matchStatusTimer = setTimeout(
+    () => pollJobEmbeddingStatus(jobId, startedAt),
+    MATCH_STATUS_POLL_INTERVAL_MS,
+  );
+}
+
+async function loadMatchScores(jobId) {
+  setMatchStatus("loading_scores", "Loading resume match scores.");
+  const scores = await safeGetResumeMatchScores(jobId);
+  if (currentJob?.id !== jobId) return;
+  currentMatchScores = scores;
+  if (scores.some((score) => score.match_score != null)) {
+    setMatchStatus("completed", "Best matching resume selected automatically.");
+    return;
+  }
+  setMatchStatus("unavailable", "Match scores are unavailable for these resumes.");
+}
+
+function setMatchStatus(status, message) {
+  currentMatchStatus = status;
+  currentMatchStatusMessage = message;
+}
+
+function resetMatchStatus() {
+  if (matchStatusTimer) {
+    clearTimeout(matchStatusTimer);
+    matchStatusTimer = null;
+  }
+  currentMatchStatus = "idle";
+  currentMatchStatusMessage = "";
 }
 
 async function getActiveTabUrl() {

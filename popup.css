@@ -124,7 +124,7 @@ h2 {
   background: var(--purple-soft);
   color: var(--purple);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   flex: 0 0 auto;
 }
 
@@ -274,7 +274,7 @@ button {
   background: var(--purple-soft);
   color: var(--purple);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -301,7 +301,7 @@ button:disabled {
   background: transparent;
   color: var(--purple);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .link-btn {
@@ -341,7 +341,7 @@ button:disabled {
 .title {
   margin-top: 4px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.25;
 }
 
@@ -359,6 +359,37 @@ button:disabled {
   color: #6f6781;
   font-size: 11px;
   line-height: 1.35;
+  border-radius: 7px;
+  padding: 0;
+}
+
+.match-status.info,
+.match-status.success,
+.match-status.warning,
+.match-status.error {
+  min-height: auto;
+  padding: 6px 8px;
+  font-weight: 600;
+}
+
+.match-status.info {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.match-status.success {
+  background: #ecfff3;
+  color: #15803d;
+}
+
+.match-status.warning {
+  background: #fffbeb;
+  color: #a16207;
+}
+
+.match-status.error {
+  background: #fef2f2;
+  color: #b91c1c;
 }
 
 .status {
@@ -367,6 +398,26 @@ button:disabled {
   color: #525252;
   font-size: 12px;
   line-height: 1.4;
+}
+
+.section-status {
+  min-height: 16px;
+  margin-top: 7px;
+  color: #6f6781;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.section-status.info {
+  color: #4338ca;
+}
+
+.section-status.error {
+  color: #b91c1c;
+}
+
+.section-status.ok {
+  color: #15803d;
 }
 
 .status.error {
