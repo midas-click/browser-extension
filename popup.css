@@ -54,15 +54,11 @@ body {
 }
 
 .logo {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
+  display: block;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
-  background: var(--purple);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 800;
+  object-fit: contain;
   box-shadow: 0 8px 18px rgba(85, 48, 158, 0.24);
 }
 
