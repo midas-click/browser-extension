@@ -1,4 +1,5 @@
 import { refreshAuthToken } from "./auth.js";
+import { validateJobPage } from "./jobPageValidation.js";
 import { clearAuth, getAuth, getSettings } from "./storage.js";
 
 export async function apiRequest(path, options = {}, canRefresh = true) {
@@ -43,10 +44,16 @@ export async function syncResumes() {
 
 export async function createJobFromPage(page) {
   const sourceUrl = normalizeUrl(page.url);
+  const rawText = buildAnalysisText(page);
+  const validation = validateJobPage(rawText, sourceUrl);
+  if (!validation.isJobPage) {
+    throw new Error(`${validation.reason}. Open a page with a full job description.`);
+  }
+
   return apiRequest("/jobs/analyze", {
     method: "POST",
     body: JSON.stringify({
-      raw_text: buildAnalysisText(page),
+      raw_text: rawText,
       source_url: sourceUrl,
     }),
   });
