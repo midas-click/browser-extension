@@ -22,6 +22,7 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
   saveAuth({
     token: message.token,
     profileId: message.profileId || null,
+    profileName: message.profileName || null,
     user: message.user || null,
     receivedAt: Date.now(),
   })
@@ -50,8 +51,6 @@ async function handleMessage(message) {
       return getState();
     case "SYNC_RESUMES":
       return refreshResumes();
-    case "CAPTURE_PAGE":
-      return captureCurrentPage();
     case "CREATE_JOB":
       return createJob();
     case "CREATE_APPLICATION":
@@ -114,7 +113,10 @@ async function createJob() {
   const page = await captureCurrentPage();
   const job = await createJobFromPage(page);
   currentJob = job;
-  currentMatchScores = await safeGetResumeMatchScores(job.id);
+  currentMatchScores = [];
+  safeGetResumeMatchScores(job.id).then((scores) => {
+    if (currentJob?.id === job.id) currentMatchScores = scores;
+  });
   return job;
 }
 

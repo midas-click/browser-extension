@@ -1,14 +1,18 @@
 import { getAuth, getSettings } from "./storage.js";
 
 let refreshPromise = null;
+const TOKEN_REFRESH_BUFFER_MS = 10 * 1000;
 
 export function isTokenExpired(token) {
   const payload = decodeJwtPayload(token);
   if (!payload?.exp) return false;
 
   const expiresAtMs = payload.exp * 1000;
-  const refreshBufferMs = 60 * 1000;
-  return Date.now() >= expiresAtMs - refreshBufferMs;
+  return Date.now() >= expiresAtMs - TOKEN_REFRESH_BUFFER_MS;
+}
+
+export function isExpiredErrorMessage(message = "") {
+  return message.toLowerCase().includes("expired");
 }
 
 function decodeJwtPayload(token) {

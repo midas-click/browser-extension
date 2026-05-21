@@ -55,11 +55,25 @@
               <p class="label">Resume</p>
               <button id="syncBtn" class="text-action" title="Sync resumes">Sync</button>
             </div>
-            <select id="resumeSelect"></select>
+            <div id="resumeDropdown" class="resume-dropdown">
+              <button
+                id="resumeDropdownBtn"
+                class="resume-trigger"
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+              >
+                <span class="resume-trigger-text">
+                  <span id="selectedResumeName" class="resume-name">No resumes synced</span>
+                </span>
+                <span class="resume-trigger-icon" aria-hidden="true"></span>
+              </button>
+              <div id="resumeOptions" class="resume-options hidden" role="listbox"></div>
+            </div>
             <p id="matchStatus" class="match-status"></p>
           </div>
 
-          <button id="createApplicationBtn" class="secondary" disabled>Create Application</button>
+          <button id="createApplicationBtn" class="primary" disabled>Create Application</button>
         </section>
 
         <button id="signOutBtn" class="link-btn">Sign out</button>

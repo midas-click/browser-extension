@@ -1,10 +1,15 @@
-import { refreshAuthToken } from "./auth.js";
+import { isExpiredErrorMessage, isTokenExpired, refreshAuthToken } from "./auth.js";
 import { validateJobPage } from "./jobPageValidation.js";
 import { clearAuth, getAuth, getSettings } from "./storage.js";
 
 export async function apiRequest(path, options = {}, canRefresh = true) {
   const settings = await getSettings();
-  const auth = await getAuth();
+  let auth = await getAuth();
+
+  if (canRefresh && auth?.token && isTokenExpired(auth.token)) {
+    auth = await refreshAuthToken();
+  }
+
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
@@ -24,7 +29,12 @@ export async function apiRequest(path, options = {}, canRefresh = true) {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    if (res.status === 401 && canRefresh) {
+    if (
+      res.status === 401 &&
+      canRefresh &&
+      auth?.token &&
+      (isTokenExpired(auth.token) || isExpiredErrorMessage(body.detail))
+    ) {
       await refreshAuthToken();
       return apiRequest(path, options, false);
     }
@@ -57,10 +67,6 @@ export async function createJobFromPage(page) {
       source_url: sourceUrl,
     }),
   });
-}
-
-export async function createApplicationForJob(job, resume) {
-  return createApplicationForJobWithMatch(job, resume);
 }
 
 export async function createApplicationForJobWithMatch(job, resume, matchScore = null) {

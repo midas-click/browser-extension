@@ -9,7 +9,6 @@
   --purple-line: #ddd0fa;
   --border: #e7e5ef;
   --muted: #737373;
-  --surface: #ffffff;
 }
 
 * {
@@ -77,12 +76,6 @@ h1 {
 h2 {
   font-size: 13px;
   line-height: 1.2;
-}
-
-#subtitle {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #6f6781;
 }
 
 .workspace {
@@ -154,25 +147,135 @@ h2 {
   letter-spacing: 0.04em;
 }
 
-select {
-  width: 100%;
-  height: 36px;
-  border: 1px solid #d8d3e6;
-  border-radius: 7px;
-  background: #fff;
-  color: #171717;
-  padding: 0 9px;
-  font-size: 13px;
-}
-
 button {
   width: 100%;
   height: 38px;
   border: 0;
   border-radius: 7px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 500;
   cursor: pointer;
+}
+
+.resume-dropdown {
+  position: relative;
+}
+
+.resume-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  height: auto;
+  padding: 8px 10px;
+  border: 1px solid #d8d3e6;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #fbfaff);
+  color: #171717;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(85, 48, 158, 0.06);
+}
+
+.resume-trigger:hover:not(:disabled),
+.resume-trigger.open {
+  border-color: var(--purple-line);
+  box-shadow: 0 0 0 3px rgba(85, 48, 158, 0.1);
+}
+
+.resume-trigger-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.resume-name {
+  max-width: 248px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.resume-trigger-icon {
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--purple);
+  border-bottom: 2px solid var(--purple);
+  transform: rotate(45deg);
+  margin-right: 2px;
+  flex: 0 0 auto;
+}
+
+.resume-trigger.open .resume-trigger-icon {
+  transform: translateY(3px) rotate(225deg);
+}
+
+.resume-options {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  height: 144px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--purple-line);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 16px 30px rgba(42, 28, 76, 0.16);
+}
+
+.resume-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: auto;
+  min-height: 38px;
+  padding: 8px 9px;
+  border-radius: 7px;
+  background: transparent;
+  color: #171717;
+  text-align: left;
+}
+
+.resume-option + .resume-option {
+  margin-top: 5px;
+}
+
+.resume-option:hover,
+.resume-option.active {
+  background: var(--purple-soft);
+}
+
+.resume-option-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.resume-option-name {
+  max-width: 218px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.resume-score {
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: var(--purple-soft);
+  color: var(--purple);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 button:disabled {
@@ -188,16 +291,6 @@ button:disabled {
 
 .primary:hover:not(:disabled) {
   background: var(--purple-strong);
-}
-
-.secondary {
-  background: var(--purple-soft);
-  color: var(--purple);
-  border: 1px solid var(--purple-line);
-}
-
-.secondary:hover:not(:disabled) {
-  background: #e7dcfb;
 }
 
 .text-action,
@@ -220,8 +313,11 @@ button:disabled {
   border-radius: 999px;
   padding: 4px 8px;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 500;
   white-space: nowrap;
+  max-width: 165px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .badge.ok {
