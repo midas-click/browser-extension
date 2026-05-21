@@ -8,6 +8,7 @@ const els = {
   createJobBtn: document.querySelector("#createJobBtn"),
   createApplicationBtn: document.querySelector("#createApplicationBtn"),
   resumeSelect: document.querySelector("#resumeSelect"),
+  matchStatus: document.querySelector("#matchStatus"),
   jobPreview: document.querySelector("#jobPreview"),
   jobTitle: document.querySelector("#jobTitle"),
   jobMeta: document.querySelector("#jobMeta"),
@@ -60,8 +61,9 @@ async function createJob() {
   try {
     const job = await send({ type: "CREATE_JOB" });
     state.lastJob = job;
+    await refreshState();
     render();
-    setStatus("Job created. Choose a resume and create the application.", "ok");
+    setStatus("Job created. Resume match scores requested.", "ok");
   } catch (error) {
     setStatus(error.message, "error");
   } finally {
@@ -101,12 +103,19 @@ function render() {
   els.authBadge.className = signedIn ? "badge ok" : "badge muted";
 
   const resumes = state?.resumes || [];
+  const matchScores = state?.matchScores || [];
+  const scoreByResumeId = new Map(matchScores.map((score) => [score.resume_id, score]));
+  const bestResumeId = getBestResumeId(matchScores);
   els.resumeSelect.innerHTML = "";
   for (const resume of resumes) {
+    const score = scoreByResumeId.get(resume.id);
     const option = document.createElement("option");
     option.value = resume.id;
-    option.textContent = resume.original_filename;
+    option.textContent = formatResumeOption(resume, score);
     els.resumeSelect.append(option);
+  }
+  if (bestResumeId) {
+    els.resumeSelect.value = bestResumeId;
   }
   if (!resumes.length) {
     const option = document.createElement("option");
@@ -121,6 +130,7 @@ function render() {
     els.jobTitle.textContent = job.title;
     els.jobMeta.textContent = [job.company, formatSalary(job)].filter(Boolean).join(" - ");
   }
+  els.matchStatus.textContent = getMatchStatusText(job, resumes, matchScores);
 
   els.createApplicationBtn.disabled = !job || !resumes.length;
 }
@@ -138,6 +148,28 @@ function setStatus(message, kind = "") {
 
 function formatSalary(job) {
   return job.salary_range || job.salary || "";
+}
+
+function formatResumeOption(resume, score) {
+  if (!score) return resume.original_filename;
+  if (score.match_score == null) return `${resume.original_filename} - match pending`;
+  return `${resume.original_filename} - ${score.match_score}% match`;
+}
+
+function getBestResumeId(matchScores) {
+  const bestScore = [...matchScores]
+    .filter((score) => score.match_score != null)
+    .sort((left, right) => right.match_score - left.match_score)[0];
+  return bestScore?.resume_id || "";
+}
+
+function getMatchStatusText(job, resumes, matchScores) {
+  if (!job || !resumes.length) return "";
+  if (!matchScores.length) return "Match scores unavailable until embeddings are ready.";
+  if (matchScores.some((score) => score.match_score != null)) {
+    return "Best matching resume selected automatically.";
+  }
+  return "Match scores are pending while embeddings finish.";
 }
 
 function send(message) {

@@ -7,12 +7,14 @@ import {
   saveResumes,
 } from "./storage.js";
 import {
-  createApplicationForJob,
+  createApplicationForJobWithMatch,
   createJobFromPage,
+  getResumeMatchScores,
   syncResumes,
 } from "./api.js";
 
 let currentJob = null;
+let currentMatchScores = [];
 
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
   if (message?.type !== "MIDAS_AUTH_TOKEN") return false;
@@ -44,6 +46,7 @@ async function handleMessage(message) {
     case "SIGN_OUT":
       await clearAuth();
       currentJob = null;
+      currentMatchScores = [];
       return getState();
     case "SYNC_RESUMES":
       return refreshResumes();
@@ -67,6 +70,7 @@ async function getState() {
   const activeUrl = await getActiveTabUrl();
   if (currentJob && !isSameUrl(currentJob.source_url, activeUrl)) {
     currentJob = null;
+    currentMatchScores = [];
   }
 
   return {
@@ -74,6 +78,7 @@ async function getState() {
     auth,
     resumes,
     lastJob: currentJob,
+    matchScores: currentMatchScores,
     settings,
   };
 }
@@ -109,6 +114,7 @@ async function createJob() {
   const page = await captureCurrentPage();
   const job = await createJobFromPage(page);
   currentJob = job;
+  currentMatchScores = await safeGetResumeMatchScores(job.id);
   return job;
 }
 
@@ -121,7 +127,16 @@ async function createApplication(resumeId) {
   const resume = resumes.find((item) => item.id === resumeId) || resumes[0];
   if (!resume) throw new Error("Upload at least one resume before creating applications");
 
-  return createApplicationForJob(lastJob, resume);
+  const matchScore = currentMatchScores.find((score) => score.resume_id === resume.id) || null;
+  return createApplicationForJobWithMatch(lastJob, resume, matchScore);
+}
+
+async function safeGetResumeMatchScores(jobId) {
+  try {
+    return await getResumeMatchScores(jobId);
+  } catch {
+    return [];
+  }
 }
 
 async function getActiveTabUrl() {

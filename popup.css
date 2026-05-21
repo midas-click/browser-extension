@@ -257,6 +257,14 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.match-status {
+  min-height: 16px;
+  margin-top: 6px;
+  color: #6f6781;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .status {
   min-height: 18px;
   margin-top: 10px;

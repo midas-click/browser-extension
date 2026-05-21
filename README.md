@@ -7,10 +7,11 @@ MV3 extension for creating Midas jobs and applications from the current job post
 1. Sign in through the web app auth bridge.
 2. Sync resumes from Midas.
 3. Create a job from the current tab URL and visible page text.
-4. Select a resume.
-5. Create an application for the created job.
+4. Fetch resume match scores for the created job.
+5. Select a resume. The highest scored resume is selected automatically when scores are available.
+6. Create an application for the created job.
 
-Match-score fetching is intentionally not implemented in the popup while backend embeddings are disabled.
+If embeddings are still pending, the popup shows the resume as pending and still allows manual selection.
 
 ## Load Locally
 

@@ -6,7 +6,8 @@ export async function getSettings() {
   const settings = isOldLocalDefault(storedSettings) ? {} : storedSettings;
 
   return {
-    ...DEFAULT_CONFIG,
+    ...LOCAL_DEV_CONFIG,  // for local 
+    // ...DEFAULT_CONFIG, // for staging
     ...settings,
   };
 }

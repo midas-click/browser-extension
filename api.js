@@ -60,6 +60,10 @@ export async function createJobFromPage(page) {
 }
 
 export async function createApplicationForJob(job, resume) {
+  return createApplicationForJobWithMatch(job, resume);
+}
+
+export async function createApplicationForJobWithMatch(job, resume, matchScore = null) {
   return apiRequest("/applications", {
     method: "POST",
     body: JSON.stringify({
@@ -72,8 +76,14 @@ export async function createApplicationForJob(job, resume) {
       tags: job.tags || [],
       notes: job.description || undefined,
       resume_id: resume?.id,
+      match_score: matchScore?.match_score ?? undefined,
+      match_explanation: matchScore?.match_explanation ?? undefined,
     }),
   });
+}
+
+export async function getResumeMatchScores(jobId) {
+  return apiRequest(`/jobs/${jobId}/resume-match-scores`);
 }
 
 function normalizeUrl(url) {
