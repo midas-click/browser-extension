@@ -28,6 +28,23 @@ test("accepts an unknown domain when the text has enough job signals", () => {
   assert.equal(result.isJobPage, true);
 });
 
+// Accepts concise postings from common hosted job boards.
+test("accepts a concise applytojob sales posting", () => {
+  const text = `
+Founding Sales Development Representative
+Advatix is hiring a sales representative to support outbound pipeline.
+Job type: full-time. Location: remote in the United States.
+You will identify prospects, qualify leads, and partner with account executives.
+Experience with CRM tools, cold outreach, and strong communication is required.
+Submit your application to be considered for this role.
+`;
+
+  const result = validateJobPage(text, "https://advatixinc.applytojob.com/apply/example");
+
+  assert.equal(result.isJobPage, true);
+  assert.ok(result.signals.includes("known job board domain"));
+});
+
 // Rejects obvious shopping pages before they reach backend analysis.
 test("rejects ecommerce pages with strong non-job signals", () => {
   const text = `

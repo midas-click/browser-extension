@@ -9,6 +9,9 @@ const JOB_BOARD_DOMAINS = new Set([
   "jobs.ashbyhq.com",
   "jobs.lever.co",
   "jobs.smartrecruiters.com",
+  "applytojob.com",
+  "icims.com",
+  "jobvite.com",
   "linkedin.com",
   "myworkdayjobs.com",
   "recruitee.com",
@@ -19,18 +22,26 @@ const JOB_BOARD_DOMAINS = new Set([
 const JOB_SECTION_PHRASES = new Set([
   "about the role",
   "about this role",
+  "about the job",
+  "about the team",
+  "job summary",
+  "role overview",
   "responsibilities",
   "what you'll do",
   "what you will do",
+  "you will",
   "what we're looking for",
   "what we are looking for",
+  "who you are",
   "qualifications",
   "requirements",
   "minimum qualifications",
   "preferred qualifications",
+  "nice to have",
   "skills",
   "experience",
   "benefits",
+  "perks",
   "compensation",
   "salary",
 ]);
@@ -39,8 +50,10 @@ const JOB_ACTION_PHRASES = new Set([
   "apply now",
   "apply for this job",
   "submit application",
+  "submit your application",
   "job description",
   "job details",
+  "job type",
   "employment type",
   "full-time",
   "part-time",
@@ -61,6 +74,16 @@ const HIRING_TERMS = new Set([
   "coordinator",
   "associate",
   "director",
+  "architect",
+  "consultant",
+  "representative",
+  "sales",
+  "executive",
+  "technician",
+  "administrator",
+  "lead",
+  "senior",
+  "intern",
   "recruiter",
   "candidate",
   "applicant",
@@ -93,8 +116,9 @@ export function validateJobPage(rawText, sourceUrl = "") {
   const text = normalizeText(rawText);
   const signals = [];
   let score = 0;
+  const knownJobDomain = isKnownJobDomain(sourceUrl);
 
-  if (isKnownJobDomain(sourceUrl)) {
+  if (knownJobDomain) {
     score += 0.3;
     signals.push("known job board domain");
   }
@@ -144,8 +168,13 @@ export function validateJobPage(rawText, sourceUrl = "") {
   }
 
   const confidence = Math.max(0, Math.min(1, Number(score.toFixed(2))));
-  const hasRequiredContent = text.length >= MIN_TEXT_LENGTH || sectionMatches + actionMatches >= 3;
-  const isJobPage = confidence >= JOB_PAGE_THRESHOLD && hasRequiredContent;
+  const signalCount = sectionMatches + actionMatches + hiringMatches;
+  const hasRequiredContent =
+    text.length >= MIN_TEXT_LENGTH ||
+    sectionMatches + actionMatches >= 3 ||
+    (knownJobDomain && text.length >= 180 && signalCount >= 2);
+  const threshold = knownJobDomain ? 0.45 : JOB_PAGE_THRESHOLD;
+  const isJobPage = confidence >= threshold && hasRequiredContent;
 
   return {
     isJobPage,
