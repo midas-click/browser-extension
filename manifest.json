@@ -33,14 +33,14 @@
     "<all_urls>",
     "http://localhost/*",
     "http://127.0.0.1/*",
-    "https://midas-click.onrender.com/*",
-    "https://midas-click.netlify.app/*"
+    "https://movup.pro/*",
+    "https://api.movup.pro/*"
   ],
   "externally_connectable": {
     "matches": [
       "http://localhost/*",
       "http://127.0.0.1/*",
-      "https://midas-click.netlify.app/*"
+      "https://movup.pro/*"
     ]
   }
 }

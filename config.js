@@ -1,6 +1,6 @@
 export const DEFAULT_CONFIG = {
-  apiBaseUrl: "https://midas-click.onrender.com/api/v1",
-  webAppUrl: "https://midas-click.netlify.app",
+  apiBaseUrl: "https://api.movup.pro/api/v1",
+  webAppUrl: "https://movup.pro",
 };
 
 export const LOCAL_DEV_CONFIG = {

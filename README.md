@@ -58,16 +58,21 @@ https://midas-click.netlify.app/*
 6. Reopen the extension popup; it should show `Signed in`.
 7. Click **Sync** to load resumes.
 
+If the auth page says extension messaging is unavailable, open the auth flow
+from the extension popup in Chrome and reload the unpacked extension after any
+`manifest.json` changes.
+
 ## Config
 
-`config.js` defaults to production:
+`config.js` defaults to production. The extension uses these values unless
+`midas_settings` has been saved in Chrome local storage:
 
 ```js
 apiBaseUrl: "https://midas-click.onrender.com/api/v1",
 webAppUrl: "https://midas-click.netlify.app",
 ```
 
-For local development, temporarily set:
+For local development, save settings that match:
 
 ```js
 apiBaseUrl: "http://localhost:8000/api/v1",

@@ -1,4 +1,4 @@
-import { LOCAL_DEV_CONFIG, STORAGE_KEYS } from "./config.js";
+import { DEFAULT_CONFIG, LOCAL_DEV_CONFIG, STORAGE_KEYS } from "./config.js";
 
 export async function getSettings() {
   const stored = await chrome.storage.local.get(STORAGE_KEYS.settings);
@@ -6,8 +6,7 @@ export async function getSettings() {
   const settings = isOldLocalDefault(storedSettings) ? {} : storedSettings;
 
   return {
-    ...LOCAL_DEV_CONFIG,  // for local 
-    // ...DEFAULT_CONFIG, // for staging
+    ...DEFAULT_CONFIG,
     ...settings,
   };
 }
