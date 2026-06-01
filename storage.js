@@ -16,12 +16,33 @@ export async function getAuth() {
   return stored[STORAGE_KEYS.auth] || null;
 }
 
+export async function getAuthStatus() {
+  const stored = await chrome.storage.local.get(STORAGE_KEYS.authStatus);
+  return stored[STORAGE_KEYS.authStatus] || { state: "idle" };
+}
+
 export async function saveAuth(auth) {
-  await chrome.storage.local.set({ [STORAGE_KEYS.auth]: auth });
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.auth]: auth,
+    [STORAGE_KEYS.authStatus]: { state: "idle", updatedAt: Date.now() },
+  });
 }
 
 export async function clearAuth() {
-  await chrome.storage.local.remove(STORAGE_KEYS.auth);
+  await chrome.storage.local.remove([STORAGE_KEYS.auth, STORAGE_KEYS.authStatus]);
+}
+
+export async function setAuthStatus(status) {
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.authStatus]: {
+      ...status,
+      updatedAt: Date.now(),
+    },
+  });
+}
+
+export async function clearAuthStatus() {
+  await chrome.storage.local.remove(STORAGE_KEYS.authStatus);
 }
 
 export async function saveResumes(resumes) {

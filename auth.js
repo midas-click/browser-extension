@@ -1,4 +1,4 @@
-import { getAuth, getSettings } from "./storage.js";
+import { clearAuthStatus, getAuth, getSettings, setAuthStatus } from "./storage.js";
 
 let refreshPromise = null;
 const TOKEN_REFRESH_BUFFER_MS = 10 * 1000;
@@ -41,6 +41,10 @@ async function runRefreshAuthToken() {
   const authUrl = new URL("/extension-auth", settings.webAppUrl);
   authUrl.searchParams.set("extensionId", chrome.runtime.id);
   authUrl.searchParams.set("silent", "true");
+  await setAuthStatus({
+    state: "refreshing",
+    message: "Refreshing your Midas session...",
+  });
 
   let authTabId = null;
   const waitForToken = new Promise((resolve, reject) => {
@@ -73,8 +77,13 @@ async function runRefreshAuthToken() {
     if (authTabId) {
       await chrome.tabs.remove(authTabId).catch(() => null);
     }
+    await clearAuthStatus();
     return auth;
   } catch (error) {
+    await setAuthStatus({
+      state: "error",
+      message: error instanceof Error ? error.message : "Session refresh failed. Sign in again.",
+    });
     if (authTabId) {
       await chrome.tabs.update(authTabId, { active: true }).catch(() => null);
     }

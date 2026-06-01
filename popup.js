@@ -1,6 +1,10 @@
+import { STORAGE_KEYS } from "./config.js";
+
 const els = {
   authBadge: document.querySelector("#authBadge"),
   signedOut: document.querySelector("#signedOut"),
+  authLoading: document.querySelector("#authLoading"),
+  authLoadingMessage: document.querySelector("#authLoadingMessage"),
   signedIn: document.querySelector("#signedIn"),
   signInBtn: document.querySelector("#signInBtn"),
   signOutBtn: document.querySelector("#signOutBtn"),
@@ -34,7 +38,10 @@ els.createApplicationBtn.addEventListener("click", createApplication);
 els.resumeDropdownBtn.addEventListener("click", toggleResumeDropdown);
 document.addEventListener("click", closeResumeDropdownOnOutsideClick);
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === "local" && changes.midas_auth) {
+  if (
+    areaName === "local" &&
+    (changes[STORAGE_KEYS.auth] || changes[STORAGE_KEYS.authStatus])
+  ) {
     refreshState();
   }
 });
@@ -43,7 +50,7 @@ init();
 
 async function init() {
   await refreshState();
-  if (state?.signedIn) {
+  if (state?.signedIn && !isAuthBlocked(state?.authStatus)) {
     await syncResumes({ quiet: true });
   }
 }
@@ -122,10 +129,35 @@ async function run(status, type) {
 
 function render() {
   const signedIn = Boolean(state?.signedIn);
-  els.signedOut.classList.toggle("hidden", signedIn);
-  els.signedIn.classList.toggle("hidden", !signedIn);
-  els.authBadge.textContent = signedIn ? getSignedInLabel(state?.auth) : "Signed out";
-  els.authBadge.className = signedIn ? "badge ok" : "badge muted";
+  const authState = state?.authStatus?.state || "idle";
+  const authBusy = isAuthBusy(state?.authStatus);
+  const authError = authState === "error";
+  const canUseAccount = signedIn && !authBusy && !authError;
+
+  els.signedOut.classList.toggle("hidden", authBusy || (signedIn && !authError));
+  els.authLoading.classList.toggle("hidden", !authBusy);
+  els.signedIn.classList.toggle("hidden", !canUseAccount);
+
+  if (authBusy) {
+    els.authBadge.textContent = authState === "refreshing" ? "Refreshing..." : "Connecting...";
+    els.authBadge.className = "badge info";
+    els.authLoadingMessage.textContent = state?.authStatus?.message || "Refreshing your Midas session...";
+  } else if (authError) {
+    els.authBadge.textContent = "Reconnect needed";
+    els.authBadge.className = "badge warning";
+    setStatus(state?.authStatus?.message || "Session refresh failed. Sign in again.", "error");
+  } else {
+    els.authBadge.textContent = signedIn ? getSignedInLabel(state?.auth) : "Signed out";
+    els.authBadge.className = signedIn ? "badge ok" : "badge muted";
+  }
+
+  els.signInBtn.disabled = authBusy;
+  els.signOutBtn.disabled = busy || !signedIn;
+  if (authBusy) {
+    setControlsDisabled(true);
+    scheduleStateRefreshIfNeeded();
+    return;
+  }
 
   const resumes = state?.resumes || [];
   const matchScores = state?.matchScores || [];
@@ -156,18 +188,28 @@ function render() {
   els.matchStatus.textContent = getMatchStatusText(job, resumes, matchScores);
   els.matchStatus.className = `match-status ${getMatchStatusClass(state?.matchStatus)}`;
 
-  els.createJobBtn.disabled = busy || Boolean(job);
-  els.createApplicationBtn.disabled = busy || !job || !resumes.length;
+  els.createJobBtn.disabled = busy || Boolean(job) || !canUseAccount;
+  els.createApplicationBtn.disabled = busy || !job || !resumes.length || !canUseAccount;
+  els.syncBtn.disabled = busy || !canUseAccount;
   scheduleStateRefreshIfNeeded();
 }
 
 function setBusy(isBusy) {
   busy = isBusy;
+  const canUseAccount = Boolean(state?.signedIn) && !isAuthBlocked(state?.authStatus);
   const hasJob = Boolean(state?.lastJob);
   const hasResumes = Boolean((state?.resumes || []).length);
-  els.createJobBtn.disabled = busy || hasJob;
-  els.createApplicationBtn.disabled = busy || !hasJob || !hasResumes;
-  els.syncBtn.disabled = busy;
+  els.createJobBtn.disabled = busy || hasJob || !canUseAccount;
+  els.createApplicationBtn.disabled = busy || !hasJob || !hasResumes || !canUseAccount;
+  els.syncBtn.disabled = busy || !canUseAccount;
+}
+
+function setControlsDisabled(disabled) {
+  els.createJobBtn.disabled = disabled;
+  els.createApplicationBtn.disabled = disabled;
+  els.syncBtn.disabled = disabled;
+  els.resumeDropdownBtn.disabled = disabled;
+  els.signOutBtn.disabled = disabled;
 }
 
 function setStatus(message, kind = "") {
@@ -274,12 +316,21 @@ function scheduleStateRefreshIfNeeded() {
     stateRefreshTimer = null;
   }
 
-  if (!shouldRefreshStateForMatchStatus(state?.matchStatus)) return;
+  if (!shouldRefreshState()) return;
   stateRefreshTimer = window.setTimeout(refreshState, 1500);
 }
 
-function shouldRefreshStateForMatchStatus(status) {
-  return ["pending", "processing", "loading_scores"].includes(status);
+function shouldRefreshState() {
+  return ["pending", "processing", "loading_scores"].includes(state?.matchStatus)
+    || isAuthBusy(state?.authStatus);
+}
+
+function isAuthBusy(authStatus = {}) {
+  return ["authenticating", "refreshing"].includes(authStatus.state);
+}
+
+function isAuthBlocked(authStatus = {}) {
+  return isAuthBusy(authStatus) || authStatus.state === "error";
 }
 
 function getMatchStatusClass(status) {

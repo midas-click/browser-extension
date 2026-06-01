@@ -57,7 +57,7 @@ export async function createJobFromPage(page) {
   const rawText = buildAnalysisText(page);
   const validation = validateJobPage(rawText, sourceUrl);
   if (!validation.isJobPage) {
-    throw new Error(`${validation.reason}. Open a page with a full job description.`);
+    throw new Error(`${validation.reason}. Open a job posting or company careers page.`);
   }
 
   return apiRequest("/jobs/analyze", {

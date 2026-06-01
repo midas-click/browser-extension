@@ -91,6 +91,23 @@ const HIRING_TERMS = new Set([
   "hiring",
 ]);
 
+const CAREERS_PAGE_PHRASES = new Set([
+  "careers",
+  "join our team",
+  "join the team",
+  "join us",
+  "our team",
+  "we're always looking",
+  "we are always looking",
+  "talented professionals",
+  "interested in joining us",
+  "send us your resume",
+  "email us",
+  "open positions",
+  "job openings",
+  "current openings",
+]);
+
 const NEGATIVE_PHRASES = new Set([
   "add to cart",
   "add to bag",
@@ -117,10 +134,16 @@ export function validateJobPage(rawText, sourceUrl = "") {
   const signals = [];
   let score = 0;
   const knownJobDomain = isKnownJobDomain(sourceUrl);
+  const careersPath = hasCareersPath(sourceUrl);
 
   if (knownJobDomain) {
     score += 0.3;
     signals.push("known job board domain");
+  }
+
+  if (careersPath) {
+    score += 0.2;
+    signals.push("careers or jobs URL path");
   }
 
   if (text.length >= MIN_TEXT_LENGTH) {
@@ -151,6 +174,12 @@ export function validateJobPage(rawText, sourceUrl = "") {
     signals.push(`${hiringMatches} hiring terms`);
   }
 
+  const careersMatches = countMatches(text, CAREERS_PAGE_PHRASES);
+  if (careersMatches) {
+    score += Math.min(0.25, careersMatches * 0.05);
+    signals.push(`${careersMatches} careers page signals`);
+  }
+
   if (hasSalarySignal(text)) {
     score += 0.08;
     signals.push("salary or compensation signal");
@@ -168,20 +197,21 @@ export function validateJobPage(rawText, sourceUrl = "") {
   }
 
   const confidence = Math.max(0, Math.min(1, Number(score.toFixed(2))));
-  const signalCount = sectionMatches + actionMatches + hiringMatches;
+  const signalCount = sectionMatches + actionMatches + hiringMatches + careersMatches;
   const hasRequiredContent =
     text.length >= MIN_TEXT_LENGTH ||
     sectionMatches + actionMatches >= 3 ||
-    (knownJobDomain && text.length >= 180 && signalCount >= 2);
-  const threshold = knownJobDomain ? 0.45 : JOB_PAGE_THRESHOLD;
+    (knownJobDomain && text.length >= 180 && signalCount >= 2) ||
+    (careersPath && text.length >= 160 && careersMatches >= 2);
+  const threshold = knownJobDomain || careersPath ? 0.45 : JOB_PAGE_THRESHOLD;
   const isJobPage = confidence >= threshold && hasRequiredContent;
 
   return {
     isJobPage,
     confidence,
     reason: isJobPage
-      ? "Page looks like a job description"
-      : "This page does not look like a job description",
+      ? "Page looks like a job or careers page"
+      : "This page does not look like a job or careers page",
     signals,
   };
 }
@@ -209,6 +239,16 @@ function isKnownJobDomain(sourceUrl) {
     return false;
   }
   return false;
+}
+
+function hasCareersPath(sourceUrl) {
+  if (!sourceUrl) return false;
+  try {
+    const path = new URL(sourceUrl).pathname.toLowerCase();
+    return /(^|\/)(careers?|jobs?|join-us|work-with-us)(\/|$)/.test(path);
+  } catch {
+    return false;
+  }
 }
 
 function hasSalarySignal(text) {

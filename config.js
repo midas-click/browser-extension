@@ -10,6 +10,7 @@ export const LOCAL_DEV_CONFIG = {
 
 export const STORAGE_KEYS = {
   auth: "midas_auth",
+  authStatus: "midas_auth_status",
   settings: "midas_settings",
   resumes: "midas_resumes",
 };

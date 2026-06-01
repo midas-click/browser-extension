@@ -1,10 +1,12 @@
 import {
   clearAuth,
   getAuth,
+  getAuthStatus,
   getCachedResumes,
   getSettings,
   saveAuth,
   saveResumes,
+  setAuthStatus,
 } from "./storage.js";
 import {
   createApplicationForJobWithMatch,
@@ -69,8 +71,9 @@ async function handleMessage(message) {
 }
 
 async function getState() {
-  const [auth, resumes, settings] = await Promise.all([
+  const [auth, authStatus, resumes, settings] = await Promise.all([
     getAuth(),
+    getAuthStatus(),
     getCachedResumes(),
     getSettings(),
   ]);
@@ -84,6 +87,7 @@ async function getState() {
   return {
     signedIn: Boolean(auth?.token),
     auth,
+    authStatus,
     resumes,
     lastJob: currentJob,
     matchScores: currentMatchScores,
@@ -97,6 +101,10 @@ async function startSignIn() {
   const settings = await getSettings();
   const authUrl = new URL("/extension-auth", settings.webAppUrl);
   authUrl.searchParams.set("extensionId", chrome.runtime.id);
+  await setAuthStatus({
+    state: "authenticating",
+    message: "Waiting for sign in to finish...",
+  });
 
   await chrome.tabs.create({ url: authUrl.toString() });
   return { opened: true };

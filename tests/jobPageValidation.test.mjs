@@ -45,6 +45,33 @@ Submit your application to be considered for this role.
   assert.ok(result.signals.includes("known job board domain"));
 });
 
+// Accepts company careers landing pages that invite applicants but do not list a full role.
+test("accepts a company careers landing page", () => {
+  const text = `
+AACI Group
+Home
+Who We Are
+Case for Change
+Partners
+Careers
+Careers
+Join Our Team
+We're always looking for talented professionals to join our team and become part of our growing organization dedicated to excellence in insurance and risk management.
+
+Interested in Joining Us?
+If you'd like to be part of our team, we'd love to hear from you.
+
+Email Us
+AACI develops technology, insurance, and protection systems that help property owners stay covered and communities stay resilient in the face of growing climate risk.
+`;
+
+  const result = validateJobPage(text, "https://aaci.example/careers");
+
+  assert.equal(result.isJobPage, true);
+  assert.ok(result.signals.includes("careers or jobs URL path"));
+  assert.ok(result.signals.some((signal) => signal.includes("careers page signals")));
+});
+
 // Rejects obvious shopping pages before they reach backend analysis.
 test("rejects ecommerce pages with strong non-job signals", () => {
   const text = `

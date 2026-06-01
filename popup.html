@@ -23,6 +23,14 @@
         <button id="signInBtn" class="primary">Sign in</button>
       </section>
 
+      <section id="authLoading" class="panel auth-loading hidden" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <div>
+          <h2>Connecting account</h2>
+          <p id="authLoadingMessage" class="copy">Refreshing your Midas session...</p>
+        </div>
+      </section>
+
       <section id="signedIn" class="workspace hidden">
         <section class="step-card">
           <div class="step-head">
