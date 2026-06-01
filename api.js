@@ -80,7 +80,6 @@ export async function createApplicationForJobWithMatch(job, resume, matchScore =
       source_url: job.source_url || undefined,
       salary_expectation: job.salary_range || undefined,
       tags: job.tags || [],
-      notes: job.description || undefined,
       resume_id: resume?.id,
       match_score: matchScore?.match_score ?? undefined,
       match_explanation: matchScore?.match_explanation ?? undefined,
