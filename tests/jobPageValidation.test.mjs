@@ -45,6 +45,27 @@ Submit your application to be considered for this role.
   assert.ok(result.signals.includes("known job board domain"));
 });
 
+// Accepts the extension capture format when the content script prefers <main>.
+test("accepts job content captured from the main element", () => {
+  const text = `
+Page title: Senior Frontend Engineer
+URL: https://company.example/jobs/frontend-engineer
+Captured from: main
+
+Senior Frontend Engineer
+About the role
+You will build React interfaces, collaborate with designers, and improve customer workflows.
+Requirements include TypeScript, accessibility, API integration, and production experience.
+This is a full-time hybrid role with compensation and benefits.
+Apply now.
+`;
+
+  const result = validateJobPage(text, "https://company.example/jobs/frontend-engineer");
+
+  assert.equal(result.isJobPage, true);
+  assert.ok(result.signals.includes("careers or jobs URL path"));
+});
+
 // Accepts company careers landing pages that invite applicants but do not list a full role.
 test("accepts a company careers landing page", () => {
   const text = `
