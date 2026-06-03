@@ -133,10 +133,11 @@ function render() {
   const authBusy = isAuthBusy(state?.authStatus);
   const authError = authState === "error";
   const canUseAccount = signedIn && !authBusy && !authError;
+  const canCreateJob = !authBusy;
 
   els.signedOut.classList.toggle("hidden", authBusy || (signedIn && !authError));
   els.authLoading.classList.toggle("hidden", !authBusy);
-  els.signedIn.classList.toggle("hidden", !canUseAccount);
+  els.signedIn.classList.toggle("hidden", !canCreateJob && !canUseAccount);
 
   if (authBusy) {
     els.authBadge.textContent = authState === "refreshing" ? "Refreshing..." : "Connecting...";
@@ -153,6 +154,7 @@ function render() {
 
   els.signInBtn.disabled = authBusy;
   els.signOutBtn.disabled = busy || !signedIn;
+  els.signOutBtn.classList.toggle("hidden", !signedIn);
   if (authBusy) {
     setControlsDisabled(true);
     scheduleStateRefreshIfNeeded();
@@ -188,18 +190,20 @@ function render() {
   els.matchStatus.textContent = getMatchStatusText(job, resumes, matchScores);
   els.matchStatus.className = `match-status ${getMatchStatusClass(state?.matchStatus)}`;
 
-  els.createJobBtn.disabled = busy || Boolean(job) || !canUseAccount;
+  els.createJobBtn.disabled = busy || Boolean(job) || !canCreateJob;
   els.createApplicationBtn.disabled = busy || !job || !resumes.length || !canUseAccount;
   els.syncBtn.disabled = busy || !canUseAccount;
+  els.resumeDropdownBtn.disabled = busy || !canUseAccount || !resumes.length;
   scheduleStateRefreshIfNeeded();
 }
 
 function setBusy(isBusy) {
   busy = isBusy;
   const canUseAccount = Boolean(state?.signedIn) && !isAuthBlocked(state?.authStatus);
+  const canCreateJob = !isAuthBusy(state?.authStatus);
   const hasJob = Boolean(state?.lastJob);
   const hasResumes = Boolean((state?.resumes || []).length);
-  els.createJobBtn.disabled = busy || hasJob || !canUseAccount;
+  els.createJobBtn.disabled = busy || hasJob || !canCreateJob;
   els.createApplicationBtn.disabled = busy || !hasJob || !hasResumes || !canUseAccount;
   els.syncBtn.disabled = busy || !canUseAccount;
 }

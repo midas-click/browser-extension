@@ -4,15 +4,16 @@ import { clearAuth, getAuth, getSettings } from "./storage.js";
 
 export async function apiRequest(path, options = {}, canRefresh = true) {
   const settings = await getSettings();
-  let auth = await getAuth();
+  const { skipAuth = false, ...fetchOptions } = options;
+  let auth = skipAuth ? null : await getAuth();
 
-  if (canRefresh && auth?.token && isTokenExpired(auth.token)) {
+  if (!skipAuth && canRefresh && auth?.token && isTokenExpired(auth.token)) {
     auth = await refreshAuthToken();
   }
 
   const headers = {
     "Content-Type": "application/json",
-    ...(options.headers || {}),
+    ...(fetchOptions.headers || {}),
   };
 
   if (auth?.token) {
@@ -23,7 +24,7 @@ export async function apiRequest(path, options = {}, canRefresh = true) {
   }
 
   const res = await fetch(`${settings.apiBaseUrl}${path}`, {
-    ...options,
+    ...fetchOptions,
     headers,
   });
 
@@ -31,6 +32,7 @@ export async function apiRequest(path, options = {}, canRefresh = true) {
     const body = await res.json().catch(() => ({}));
     if (
       res.status === 401 &&
+      !skipAuth &&
       canRefresh &&
       auth?.token &&
       (isTokenExpired(auth.token) || isExpiredErrorMessage(body.detail))
@@ -63,11 +65,12 @@ export async function createJobFromPage(page) {
 
   return apiRequest("/jobs/analyze", {
     method: "POST",
+    skipAuth: true,
     body: JSON.stringify({
       raw_text: rawText,
       source_url: sourceUrl,
     }),
-  });
+  }, false);
 }
 
 export async function createApplicationForJobWithMatch(job, resume, matchScore = null) {
