@@ -1,6 +1,6 @@
 export const DEFAULT_CONFIG = {
   apiBaseUrl: "https://api.movup.pro/api/v1",
-  webAppUrl: "https://movup.pro",
+  webAppUrl: "https://midas-click.movup.pro",
 };
 
 export const LOCAL_DEV_CONFIG = {

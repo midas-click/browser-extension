@@ -33,14 +33,14 @@
     "<all_urls>",
     "http://localhost/*",
     "http://127.0.0.1/*",
-    "https://movup.pro/*",
+    "https://midas-click.movup.pro/*",
     "https://api.movup.pro/*"
   ],
   "externally_connectable": {
     "matches": [
       "http://localhost/*",
       "http://127.0.0.1/*",
-      "https://movup.pro/*"
+      "https://midas-click.movup.pro/*"
     ]
   }
 }
